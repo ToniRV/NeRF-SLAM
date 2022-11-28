@@ -1,0 +1,10 @@
+[submodule "thirdparty/lietorch"]
+	path = thirdparty/lietorch
+	url = https://github.com/princeton-vl/lietorch
+[submodule "thirdparty/eigen"]
+	path = thirdparty/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "thirdparty/instant-ngp"]
+	path = thirdparty/instant-ngp
+	url = https://github.com/ToniRV/instant-ngp.git
+  branch = feature/nerf_slam
