@@ -1,8 +1,8 @@
-<div style="display: grid; grid-auto-flow: column; justify-content: center; align-items:center; gap: 50px">
+<div align="center">
   <a href="http://mit.edu/sparklab/">
-    <img style="padding-left: 20px; max-width: 50px" src="./media/sparklab_logo.png" alt="sparklab">
+    <img align="left" style="padding-left: 20px; max-width: 50px" src="./media/sparklab_logo.png" alt="sparklab">
   </a> 
-  <h1 style="">
+  <h1 align="center">
     <b>NeRF-SLAM</b>
   </h1>
   <a href="https://marinerobotics.mit.edu/">
