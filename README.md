@@ -66,8 +66,15 @@ if you forgot`--recurse-submodules` above, run:
 
 Pip install requirements:
 ```
-pip install -r requirements.txt
+pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu113
 ```
+
+<details>
+  <summary>[Installation details]</summary>
+
+  > Make sure you set `cu113` to your nvcc version (`nvcc --version`)) and that the versions of torch inside `requirements.txt` are fine for your system. See [here](https://pytorch.org/get-started/previous-versions/) for compatible versions of torch, torchvision, and nvcc.
+
+</details>
 
 Compile ngp (you need cmake>3.22):
 ```
