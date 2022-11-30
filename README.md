@@ -12,7 +12,7 @@
   <!-- <h2 align="center">In Review</h2> -->
   <h3 align="center">
     <a href="https://arxiv.org/abs/2210.13641">Paper</a> |
-    <a href="">Video</a> | 
+    <a href="https://www.youtube.com/watch?v=-6ufRJugcEU">Video</a> | 
     <!-- <a href="">Project Page</a>-->
   </h3>
   <div align="center"></div>
