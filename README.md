@@ -1,5 +1,19 @@
+<div align="center">
+  <a href="http://mit.edu/sparklab/">
+    <img align="left" src="./media/sparklab_logo.png" width="80" alt="sparklab">
+  </a> 
+  <a href="https://www.mit.edu/~arosinol/">
+    <img align="center" src="./media/mrg_logo.png" width="150" alt="kimera">
+  </a> 
+  <a href="https://mit.edu"> 
+    <img align="right" src="./media/mit.png" width="100" alt="mit">
+  </a>
+</div>
+
 <p align="center">
-  <h1 align="center">NeRF-SLAM</h1>
+  <div align="center">
+    <h1>NeRF-SLAM</h1>
+  </div>
   <h1 align="center">
   Real-Time Dense Monocular SLAM with Neural Radiance Fields</h1>
   <p align="center">
