@@ -57,24 +57,19 @@
 Clone repo with submodules:
 ```
 git clone https://github.com/ToniRV/NeRF-SLAM.git --recurse-submodules
+git submodule update --init --recursive
 ```
 
-if you forgot`--recurse-submodules` above, run: 
- ```
- git submodule update --init --recursive
- ```
+Install torch (see [here](https://pytorch.org/get-started/previous-versions) for other versions):
+```
+# CUDA 11.3
+pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 --extra-index-url https://download.pytorch.org/whl/cu113
+```
 
 Pip install requirements:
 ```
-pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu113
+pip install -r requirements.txt
 ```
-
-<details>
-  <summary>[Installation details]</summary>
-
-  > Make sure you set `cu113` to your nvcc version (`nvcc --version`)) and that the versions of torch inside `requirements.txt` are fine for your system. See [here](https://pytorch.org/get-started/previous-versions/) for compatible versions of torch, torchvision, and nvcc.
-
-</details>
 
 Compile ngp (you need cmake>3.22):
 ```
@@ -121,7 +116,7 @@ added here as a thirdparty dependency using git submodules.
 ## Acknowledgments
 
 This work has been possible thanks to the open-source code from [Droid-SLAM](https://github.com/princeton-vl/DROID-SLAM) and 
-[Instant-NGP](https://github.com/NVlabs/instant-ngp), as well as the open-source datasets [Replica]() and [Cube-Diorama](https://github.com/jc211/nerf-cube-diorama-dataset).
+[Instant-NGP](https://github.com/NVlabs/instant-ngp), as well as the open-source datasets [Replica](https://github.com/facebookresearch/Replica-Dataset) and [Cube-Diorama](https://github.com/jc211/nerf-cube-diorama-dataset).
 
 ## Contact
 
