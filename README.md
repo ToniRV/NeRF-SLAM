@@ -2,10 +2,10 @@
   <a href="http://mit.edu/sparklab/">
     <img align="left" src="./media/sparklab_logo.png" width="80" alt="sparklab">
   </a> 
-  <a href="https://www.mit.edu/~arosinol/">
+  <a href="https://marinerobotics.mit.edu/">
     <img align="center" src="./media/mrg_logo.png" width="150" alt="kimera">
   </a> 
-  <a href="https://mit.edu"> 
+  <a href="https://www.mit.edu/~arosinol/"> 
     <img align="right" src="./media/mit.png" width="100" alt="mit">
   </a>
 </div>
