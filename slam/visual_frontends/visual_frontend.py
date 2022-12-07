@@ -267,7 +267,8 @@ class RaftVisualFrontend(VisualFrontend):
             # Initialize network buffers
             self.initialize_buffers(imgs_k.shape[-2:]) # last two dims are h,w
             self.gt_poses[self.kf_idx]        = torch.tensor(batch["poses"][0],           device=self.device)
-            self.gt_depths[self.kf_idx]       = torch.tensor(batch["depths"][0],          device=self.device).permute(2,0,1)
+            if batch["depths"][0] is not None:
+                self.gt_depths[self.kf_idx]   = torch.tensor(batch["depths"][0],          device=self.device).permute(2,0,1)
             self.cam0_timestamps[self.kf_idx] = torch.tensor(batch["t_cams"][0],          device=self.device)
             self.cam0_images[self.kf_idx]     = torch.tensor(batch["images"][0],          device=self.device)[..., :3].permute(2,0,1)
             self.cam0_intrinsics[self.kf_idx] = (1.0 / self.dsf) * torch.tensor(batch["calibs"][0].camera_model.numpy(), device=self.device)
@@ -306,7 +307,8 @@ class RaftVisualFrontend(VisualFrontend):
         # Ok, we got enough motion, consider this frame as a keyframe
         # Compute dense optical flow
         self.gt_poses[self.kf_idx]        = torch.tensor(batch["poses"][0],           device=self.device)
-        self.gt_depths[self.kf_idx]       = torch.tensor(batch["depths"][0],          device=self.device).permute(2,0,1)
+        if batch["depths"][0] is not None:
+            self.gt_depths[self.kf_idx]   = torch.tensor(batch["depths"][0],          device=self.device).permute(2,0,1)
         self.cam0_timestamps[self.kf_idx] = torch.tensor(batch["t_cams"][0],          device=self.device)
         self.cam0_images[self.kf_idx]     = torch.tensor(batch["images"][0],          device=self.device)[..., :3].permute(2,0,1)
         self.cam0_intrinsics[self.kf_idx] = (1.0 / self.dsf) * torch.tensor(batch["calibs"][0].camera_model.numpy(), device=self.device)

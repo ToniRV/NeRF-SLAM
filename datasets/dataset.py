@@ -29,7 +29,7 @@ class Dataset(Dataset):
     def stream(self):
         pass
 
-class _PointCloudTransmissionFormat:
+class PointCloudTransmissionFormat:
     def __init__(self, pointcloud: o3d.geometry.PointCloud):
         self.points = np.array(pointcloud.points)
         self.colors = np.array(pointcloud.colors)

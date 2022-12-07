@@ -22,13 +22,13 @@ class EurocDataset(Dataset):
     def __init__(self, args, device) -> None:
         super().__init__("Euroc", args, device)
 
-        self.t0 = None # timestamp for first frame in data_packet
-
         self.show_gt_pcl = True
 
-        build_dataset_index = False
+        self.parse_metadata(self.dataset_dir)
+        self.tqdm = tqdm(total=self.__len__()) # Call after parsing metadata
 
-        self._parse_dataset(self.dataset_dir)
+        # This is in case you want to parse all the dataset first.
+        build_dataset_index = False
         if build_dataset_index:
             print('Building dataset index')
             self._build_dataset_index()
@@ -60,7 +60,6 @@ class EurocDataset(Dataset):
 
         return cv2.remap(img0, map_l[0], map_l[1], interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT),\
                cv2.remap(img1, map_r[0], map_r[1], interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-
 
     def _get_cam_calib(self, cam_calib_file):
         cam_calib = self.yaml.load(open(cam_calib_file, 'r'))
@@ -114,7 +113,7 @@ class EurocDataset(Dataset):
         body_T_vicon0 = T_BS#SE3(th.as_tensor(pose_matrix_to_t_and_quat(T_BS), device=self.device))
         return ViconCalibration(body_T_vicon0)
 
-    def _parse_dataset(self, dataset_dir):
+    def parse_metadata(self, dataset_dir):
         mav_dir = os.path.join(dataset_dir, 'mav0')
 
         # Cam0
@@ -130,32 +129,23 @@ class EurocDataset(Dataset):
         #cam1_data_csv = os.path.join(cam1_dir, 'data.csv')
 
         ## Get Cam Calib
-        self.cam0_calib : CameraCalibration = self._get_cam_calib(cam0_calib_file)
-        self.cam_calibs = [self.cam0_calib]
-        if self.stereo:
-            self.cam1_calib : CameraCalibration = self._get_cam_calib(cam1_calib_file)
-            self.cam_calibs += [self.cam1_calib]
+        self.cam_calib : CameraCalibration = self._get_cam_calib(cam0_calib_file)
+        self.original_cam_calib : CameraCalibration = self._get_cam_calib(cam0_calib_file)
 
         self.resize_images = True
         self.output_image_size = [384, 512]
         if self.resize_images:
-            h0, w0  = self.cam0_calib.resolution.height, self.cam0_calib.resolution.width
+            h0, w0  = self.cam_calib.resolution.height, self.cam_calib.resolution.width
             total_output_pixels = (self.output_image_size[0] * self.output_image_size[1])
-            h1 = int(h0 * np.sqrt(total_output_pixels / (h0 * w0)))
-            w1 = int(w0 * np.sqrt(total_output_pixels / (h0 * w0)))
-            self.cam0_calib_resized : CameraCalibration = self._get_cam_calib(cam0_calib_file)
-            self.cam0_calib_resized.camera_model.scale_intrinsics(w1 / w0, h1 / h0)
-            self.cam_calibs_resized = [self.cam0_calib_resized]
-            if self.stereo:
-                self.cam1_calib_resized : CameraCalibration = self._get_cam_calib(cam1_calib_file)
-                self.cam1_calib_resized.camera_model.scale_intrinsics(w1 / w0, h1 / h0)
-                self.cam_calibs_resized += [self.cam1_calib_resized]
-
+            self.h1 = int(h0 * np.sqrt(total_output_pixels / (h0 * w0)))
+            self.w1 = int(w0 * np.sqrt(total_output_pixels / (h0 * w0)))
+            self.h1 = self.h1 - self.h1 % 8
+            self.w1 = self.w1 - self.w1 % 8
+            self.cam_calib.camera_model.scale_intrinsics(self.w1 / w0, self.h1 / h0)
+            self.cam_calib.resolution = Resolution(self.w1, self.h1)
 
         ## Get Image Lists
         img0_file_list = sorted(os.listdir(self.cam0_data_dir))
-        if self.stereo:
-            img1_file_list = sorted(os.listdir(self.cam1_data_dir))        
 
         # Build dicts
         # Clean up the file list
@@ -164,25 +154,11 @@ class EurocDataset(Dataset):
             t_cam0 = int(os.path.splitext(img0_file_name)[0])
             img0_file_dict[t_cam0] = img0_file_name
 
-        img1_file_dict={}
-        if self.stereo:
-            for i, img1_file_name in enumerate(img1_file_list):
-                t_cam1 = int(os.path.splitext(img1_file_name)[0])
-                img1_file_dict[t_cam1] = img1_file_name
-
         if self.final_k > len(img0_file_list):
             print(f"WARNING: final_k is larger than the number of images in the dataset. Setting final_k to {self.final_k}")
             self.final_k = len(img0_file_list)
 
-        if self.stereo:
-            if self.final_k > len(img1_file_list):
-                print(f"WARNING: final_k is larger than the number of images in the dataset. Setting final_k to {self.final_k}")
-                self.final_k = len(img1_file_list)
-
         self.img0_file_list = img0_file_list[self.initial_k:self.final_k:self.img_stride]
-        if self.stereo:
-            self.img1_file_list = img1_file_list[self.initial_k:self.final_k:self.img_stride]
-            assert(len(self.img0_file_list) == len(self.img1_file_list))
 
         # Imu
         imu0_dir = os.path.join(mav_dir, 'imu0')
@@ -223,151 +199,117 @@ class EurocDataset(Dataset):
         self.gt_pointcloud = None
         if self.show_gt_pcl:
             print("Loading ply point cloud")
-            self.gt_pointcloud = _PointCloudTransmissionFormat(o3d.io.read_point_cloud(os.path.join(mav_dir, 'pointcloud0/data_intensity_crop.ply')))
+            self.gt_pointcloud = PointCloudTransmissionFormat(o3d.io.read_point_cloud(os.path.join(mav_dir, 'pointcloud0/data_intensity_crop.ply')))
             print("Loaded ply point cloud")
 
-    def _get_data_packet(self, k, img0_file_name, img1_file_name=None):
-        # The img_filename has the timestamp of the image! At least for Euroc!
-        t_cam0 = int(os.path.splitext(img0_file_name)[0])
-        if self.stereo:
-            t_cam1 = int(os.path.splitext(img1_file_name)[0])
-            # delta_t_btw_imu_img = 0 # t_imu = t_img + delta_t TODO
-            assert(t_cam0 == t_cam1)
-        # Send to GPU?
-        t_cams = [t_cam0]
-        if self.stereo:
-            t_cams += [t_cam1]
-
-        # TODO: I'm not sure we should specify/use th.float64 here, maybe let it figure it out.
-        # Group IMU data into packets btw frames
-        imu_t0_t1 = None
-        gt_t0_t1 = vicon_t0_t1 = pd.DataFrame()
-        t1 = t_cam0
-        t1_near = self.gt_df.index.get_indexer([t1], method="nearest")[0]
-        if self.t0 is not None:
-            # +1 to include t1_near, we are duplicating the last row though...
-            imu_t0_t1   = self.imu_df.iloc[self.t0:t1_near+1].to_numpy(dtype=np.float64)
-            gt_t0_t1    = self.gt_df.iloc[self.t0:t1_near+1]
-            vicon_t0_t1 = self.vicon_df.iloc[self.t0:t1_near+1]
+    def _get_data_packet(self, k0, k1=None):
+        if k1 is None: 
+            k1 = k0 + 1
         else:
-            imu_t0_t1   = self.imu_df.iloc[t1_near].to_numpy(dtype=np.float64)
-            gt_t0_t1    = self.gt_df.iloc[t1_near]
-            vicon_t0_t1 = self.vicon_df.iloc[t1_near]
-        self.t0 = t1_near
+            assert(k1 >= k0)
 
-        # TODO: ideally load directly to cuda, and do everything in GPU
-        # TODO: The channels are redundant, since we are dealing with grey images!!
-        # Read images
-        images = [cv2.imread(os.path.join(self.cam0_data_dir, img0_file_name))]
-        if self.stereo:
-            images += [cv2.imread(os.path.join(self.cam1_data_dir, img1_file_name))]
+        timestamps = []
+        poses      = []
+        images     = []
+        depths     = []
+        calibs     = []
 
-        if self.viz:
-            for i, img in enumerate(images):
-                cv2.imshow(f"Img{i} Euroc", img)
+        W, H = self.cam_calib.resolution.width, self.cam_calib.resolution.height 
 
-        # TODO: the undistortion/rectification removes a lot of the image...
-        # It would be better to just run on the distorted images, and then
-        # undisort the flow.
-        # Undistort/Rectify images
-        # TODO use the values in self.cam_calibs object instead
-        # for i in range(len(images)):
-        #     images[i] = cv2.undistort(images[i],
-        #                               self.cam_calibs[i].camera_model.get_intrinsics_as_matrix(),
-        #                               self.cam_calibs[i].distortion_model.get_distortion_as_vector())
-        images = [cv2.undistort(img,
-                                self.cam_calibs[i].camera_model.matrix(),
-                                self.cam_calibs[i].distortion_model.get_distortion_as_vector())
-                  for i, img in enumerate(images)]
+        for k in np.arange(k0, k1):
+            img0_file_name = self.img0_file_list[k]
 
-        #images[0] = cv2.undistort(images[0],
-        #                            self.cam_calibs[0].camera_model.get_intrinsics_as_matrix(),
-        #                            self.cam_calibs[0].distortion_model.get_distortion_as_vector())
-        #img0, img1 = self.undistort_rectify(img0, img1)
+            # Get timestamp
+            t_cam0 = int(os.path.splitext(img0_file_name)[0])
 
-        if self.viz:
-            for i, img in enumerate(images):
-                cv2.imshow(f"Img{i} Undistort(Rectify)", img)
+            # Get pose
+            t_cam0_near = self.gt_df.index.get_indexer([t_cam0], method="nearest")[0]
+            w2c = get_pose_from_df(self.gt_df.iloc[t_cam0_near])
 
-        # Resize images
-        if self.resize_images:
-            h0, w0, _ = images[0].shape
-            output_image_size = [384, 512]
-            total_output_pixels = (output_image_size[0] * output_image_size[1])
-            h1 = int(h0 * np.sqrt(total_output_pixels / (h0 * w0)))
-            w1 = int(w0 * np.sqrt(total_output_pixels / (h0 * w0)))
-
-            for i in range(len(images)):
-                images[i] = cv2.resize(images[i], (w1, h1))
-                images[i] = images[i][:h1-h1%8, :w1-w1%8]
+            # Get image
+            image = cv2.imread(os.path.join(self.cam0_data_dir, img0_file_name))
 
             if self.viz:
-                for i, img in enumerate(images):
-                    cv2.imshow(f"Img{i} Undistort(Rectify) + Resized", img)
+                cv2.imshow("Img", image)
+                cv2.waitKey(1)
 
-        # TODO: ideally allocate these in the visual frontend buffered
-        # First dimension is to add batch dimension (equivalent to unsqueeze(0))
-        # Second dimension is stereo camera index
-        # Third dimension is channel
-        # Forth,Fifth dimensions are height, width
-        # This copies the data because of advanced indexing
-        # image.shape == (c, 480, 752, 3)
-        # img_norm.shape == (1, c, 3, 480, 752)
+            # Undistort img
+            image = cv2.undistort(image,
+                                  self.original_cam_calib.camera_model.matrix(),
+                                  self.original_cam_calib.distortion_model.get_distortion_as_vector())
 
-        if self.viz:
-            cv2.waitKey(1)
-        images = np.array(images)
-        t_cams = np.array(t_cams)
-        assert images.shape[0] == t_cams.shape[0]
-        return {"k": k,
-                "t_cams": t_cams,
-                "images": images,
-                "cam_calibs": self.cam_calibs if not self.resize_images else self.cam_calibs_resized,
-                "imu_t0_t1": imu_t0_t1,
-                "imu_calib": self.imu_calib,
-                "gt_t0_t1": gt_t0_t1,
-                "vicon_t0_t1": vicon_t0_t1,
-                "is_last_frame": (k >= self.__len__() - 1),
+            if self.viz:
+                cv2.imshow("Img Undistort", image)
+                cv2.waitKey(1)
+
+            # Resize images
+            if self.resize_images:
+                image = cv2.resize(image, (self.w1, self.h1))
+
+                if self.viz:
+                    cv2.imshow(f"Img Undistort(Rectify) + Resized", image)
+                    cv2.waitKey(1)
+
+            # TODO: ideally allocate these in the visual frontend buffered
+            # 1st dimension is to add batch dimension (equivalent to unsqueeze(0))
+            # 2nd dimension is stereo camera index
+            # 3rd dimension is channel
+            # 4th, 5th dimensions are height, width
+            # This copies the data because of advanced indexing
+            # image.shape == (c, 480, 752, 3)
+            # img_norm.shape == (1, c, 3, 480, 752)
+            assert(H == image.shape[0])
+            assert(W == image.shape[1])
+            assert(3 == image.shape[2] or 4 == image.shape[2])
+            assert(np.uint8 == image.dtype)
+
+            timestamps += [k]
+            poses      += [w2c]
+            images     += [image]
+            depths     += [None]
+            calibs     += [self.cam_calib]
+
+        return {"k":      np.arange(k0, k1),
+                "t_cams": np.array(timestamps),
+                "images": np.array(images),
+                "depths": np.array(depths),
+                "poses":  np.array(poses),
+                "calibs": np.array(calibs),
+                "is_last_frame": (k0 >= self.__len__() - 1),
                 }
 
+    def __len__(self):
+        return len(self.img0_file_list)
 
-    # Return all data btw frames, plus the subsequent frame.
-    def stream(self):
-        if self.stereo:
-            for k, img_file_names in enumerate(zip(self.img0_file_list, self.img1_file_list)):
-                yield self._get_data_packet(k, img_file_names)
-        else:
-            for k, img0_file_name in enumerate(self.img0_file_list):
-                yield self._get_data_packet(k, img0_file_name)
+    def __getitem__(self, k):
+        self.tqdm.update(1)
+        return self._get_data_packet(k) if self.data_packets is None else self.data_packets[k]
 
     # Up to you how you index the dataset depending on your training procedure
     def _build_dataset_index(self):
         # Go through the stream and bundle as you wish
-        # Here we do the simplest scenario, send imu data between frames,
-        # and the next frame as a packet
+        # Here we do the simplest scenario, send imu data between frames, and the next frame as a packet
         self.data_packets = [data_packet for data_packet in self.stream()]
 
-    def __getitem__(self, index):
-        return self.data_packets[index] if self.data_packets is not None else self._get_data_packet(index, self.img0_file_list[index], self.img1_file_list[index] if self.stereo else None)
-
-    def __len__(self):
-        return len(self.data_packets) if self.data_packets is not None else len(self.img0_file_list)
+    def stream(self):
+        for k in range(self.__len__()):
+            yield self._get_data_packet(k)
 
     def to_nerf_format(self):
         import math
         OUT_PATH = "transforms.json"
         AABB_SCALE = 4
         out = {
-            "fl_x": self.cam0_calib.camera_model.fx,
-            "fl_y": self.cam0_calib.camera_model.fy,
-            "k1": self.cam0_calib.distortion_model.k1,
-            "k2": self.cam0_calib.distortion_model.k2,
-            "p1": self.cam0_calib.distortion_model.p1,
-            "p2": self.cam0_calib.distortion_model.p2,
-            "cx": self.cam0_calib.camera_model.cx,
-            "cy": self.cam0_calib.camera_model.cy,
-            "w": self.cam0_calib.resolution.width,
-            "h": self.cam0_calib.resolution.height,
+            "fl_x": self.cam_calib.camera_model.fx,
+            "fl_y": self.cam_calib.camera_model.fy,
+            "k1": self.cam_calib.distortion_model.k1,
+            "k2": self.cam_calib.distortion_model.k2,
+            "p1": self.cam_calib.distortion_model.p1,
+            "p2": self.cam_calib.distortion_model.p2,
+            "cx": self.cam_calib.camera_model.cx,
+            "cy": self.cam_calib.camera_model.cy,
+            "w": self.cam_calib.resolution.width,
+            "h": self.cam_calib.resolution.height,
             "aabb_scale": AABB_SCALE,
             "frames": [],
         }
@@ -384,7 +326,7 @@ class EurocDataset(Dataset):
 
             nearest_t_cam0 = gt_df.index.get_indexer([data_packet["t_cams"][0]], method="nearest")[0]
             world_T_body = get_pose_from_df(gt_df.iloc[nearest_t_cam0])
-            world_T_cam0 =  world_T_body @ self.cam0_calib.body_T_cam
+            world_T_cam0 =  world_T_body @ self.cam_calib.body_T_cam
 
             # Img name
             cam0_file_name = self.img0_file_list[data_packet["k"]]

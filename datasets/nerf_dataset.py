@@ -96,7 +96,7 @@ class NeRFDataset(Dataset):
         # Store the first pose, used as prior and initial state in SLAM.
         self.args.world_T_imu_t0 = self.w2c[0]
 
-    def read_data(self, k0, k1=None):
+    def _get_data_packet(self, k0, k1=None):
         if k1 is None: 
             k1 = k0 + 1
         else:
@@ -113,7 +113,7 @@ class NeRFDataset(Dataset):
         # Parse images and tfs
         for k in np.arange(k0, k1):
             i, image_path = self.image_paths[k]
-            depth_path = self.depth_paths[i]
+            depth_path = self.depth_paths[i] # index with i, bcs we sorted image_paths to have increasing timestamps.
             w2c = self.w2c[i]
 
             # Parse rgb/depth images
@@ -168,8 +168,6 @@ class NeRFDataset(Dataset):
         self.tqdm.update(1)
         return self._get_data_packet(k) if self.data_packets is None else self.data_packets[k]
 
-    def _get_data_packet(self, k0, k1=None):
-        return self.read_data(k0, k1)
 
     # Up to you how you index the dataset depending on your training procedure
     def _build_dataset_index(self):
