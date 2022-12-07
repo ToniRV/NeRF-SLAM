@@ -76,8 +76,6 @@ class TsdfFusion:
                 sdf_trunc=self.sdf_trunc,
                 color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8)
         else:
-            ic(self.device)
-            ic(self.o3d_device)
             self.volume = o3d.t.geometry.VoxelBlockGrid(
                 attr_names=('tsdf', 'weight', 'color'),
                 attr_dtypes=(o3d.core.float32, o3d.core.float32, o3d.core.float32),
@@ -556,7 +554,6 @@ class TsdfFusion:
         return masks
 
     def build_mesh(self, min_weight_for_mesh):
-        ic("Meshing...")
         mesh = None
         if self.volume:
             if self.use_old_volume:
@@ -573,7 +570,6 @@ class TsdfFusion:
                     self.volume_file_name_count += 1
         else:
             print("No available volume to mesh...")
-        ic("Done Meshing...")
         return mesh
 
     def stop_condition(self):

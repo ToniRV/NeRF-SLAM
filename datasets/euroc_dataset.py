@@ -14,7 +14,7 @@ import open3d as o3d
 import cv2
 
 from utils.utils import *
-from dataset import * 
+from datasets.dataset import * 
 
 class EurocDataset(Dataset):
     yaml = YAML()

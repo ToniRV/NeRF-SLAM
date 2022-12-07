@@ -160,6 +160,9 @@ class Open3dGui:
         self.min_weight_for_render = 0.01 # render only the very accurate pixels
         self.min_weight_for_mesh = 0.1 # The smaller the more uncertain geometry that will be in the mesh.
 
+        self.mesh_every_t = 1.0
+        self.kf_idx = 0 # Keyframe index
+
         self.droid_camera_actors = {}
         self.body_actors = {}
         self.body_sigma_actors = {}
@@ -169,7 +172,7 @@ class Open3dGui:
         self.o3d_pcl_actors = {}
 
         self.viz = o3d.visualization.VisualizerWithKeyCallback()
-        self.viz.create_window(width=640, height=480) #create_window(self, window_name='Open3D', width=1920, height=1080, left=50, top=50, visible=True)
+        self.viz.create_window(width=1200, height=680) #create_window(self, window_name='Open3D', width=1920, height=1080, left=50, top=50, visible=True)
 
         self.viz.get_render_option().point_size = 0.001 # in m
         self.viz.get_render_option().background_color = np.asarray([0, 0, 0]) # Black background
@@ -474,8 +477,8 @@ class Open3dGui:
         if self.viz_body_sigmas:
             self.vis_body_sigmas(packet)
 
-        #if self.mesh_every_t and self.kf_idx % self.mesh_every_t == 0:
-        #    self.build_mesh() # TODO: needs the volume
+        if self.mesh_every_t and self.kf_idx % self.mesh_every_t == 0:
+            self.build_mesh()
 
         if self.volumetric_fusion and self.tsdf_fusion:
             if packet is None:
@@ -522,7 +525,7 @@ class Open3dGui:
     def update_history(self, packet):
         if packet["is_last_frame"]:
             return False
-        kf_idx                 = packet["kf_idx"]
+        self.kf_idx            = packet["kf_idx"]
         viz_idx                = packet["viz_idx"]
         cam0_poses             = packet["cam0_poses"]
         cam0_depths_cov_up     = packet["cam0_depths_cov_up"]
@@ -539,7 +542,7 @@ class Open3dGui:
             if not ix in self.history.keys():
                 self.history[ix] = {}
             h = self.history[ix]
-            h["kf_idx"]                 = kf_idx
+            h["kf_idx"]                 = self.kf_idx
             h["viz_idx"]                = viz_idx[i] # no need to store it since ix == viz_idx[i]
             h["cam0_poses"]             = cam0_poses[i]
             h["cam0_depths_cov_up"]     = cam0_depths_cov_up[i]
