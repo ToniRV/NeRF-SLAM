@@ -36,7 +36,6 @@
     <img src="./media/intro.gif" alt="" width="90%">
   </a>
 </p>
-<br>
 
 <details open="open" style='padding: 10px; border-radius:5px 30px 30px 5px; border-style: solid; border-width: 1px;'>
   <summary>Table of Contents</summary>
@@ -64,7 +63,6 @@
     </li>
   </ol>
 </details>
-<br>
 
 ## Install
 

@@ -30,16 +30,16 @@ class DataModule(MIMOPipelineModule):
             from datasets.euroc_dataset import EurocDataset
             self.dataset = EurocDataset(self.args, self.device)
         elif self.name == "tum":
-            from datasets.euroc_dataset import TumDataset
+            from datasets.tum_dataset import TumDataset
             self.dataset = TumDataset(self.args, self.device)
         elif self.name == "nerf":
-            from datasets.euroc_dataset import NeRFDataset
+            from datasets.nerf_dataset import NeRFDataset
             self.dataset = NeRFDataset(self.args, self.device)
         elif self.name == "replica":
-            from datasets.euroc_dataset import ReplicaDataset
+            from datasets.replica_dataset import ReplicaDataset
             self.dataset = ReplicaDataset(self.args, self.device)
         elif self.name == "real":
-            from datasets.euroc_dataset import RealSenseDataset
+            from datasets.real_sense_dataset import RealSenseDataset
             self.dataset = RealSenseDataset(self.args, self.device)
         else:
             raise Exception(f"Unknown dataset: {self.name}")
