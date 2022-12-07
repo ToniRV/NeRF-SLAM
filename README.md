@@ -107,6 +107,26 @@ This will just download one of the replica scenes:
 python ./examples/slam_demo.py --dataset_dir=./datasets/Replica/office0 --dataset_name=nerf --buffer=100 --slam --parallel_run --img_stride=2 --fusion='nerf' --multi_gpu --gui
 ```
 
+## FAQ
+
+### GPU Memory
+
+This is a GPU memory intensive pipeline, to monitor your GPU usage, I'd recommend to use `nvitop`.
+Install nvitop in a local env:
+```
+pip3 install --upgrade nvitop
+```
+
+Keep it running on a terminal, and monitor GPU memory usage:
+```
+nvitop --monitor
+```
+
+If you consistently see "out-of-memory" errors, you may either need to change parameters or buy better GPUs :).
+The memory consuming parts of this pipeline are:
+- Frame to frame correlation volumes (but can be avoided using on-the-fly correlation computation).
+- Volumetric rendering (intrinsically memory intensive, tricks exist, but ultimately we need to move to light fields or some better representation (OpenVDB?)).
+
 ## Citation
 
 ```bibtex
