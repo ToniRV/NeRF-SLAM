@@ -137,6 +137,18 @@ The memory consuming parts of this pipeline are:
 - Frame to frame correlation volumes (but can be avoided using on-the-fly correlation computation).
 - Volumetric rendering (intrinsically memory intensive, tricks exist, but ultimately we need to move to light fields or some better representation (OpenVDB?)).
 
+### Installation issues
+
+1. Gtsam not working: check that the python wrapper is installed, check instructions here: [gtsam_python](https://github.com/ToniRV/gtsam-1/blob/develop/python/README.md). Make sure you use our gtsam fork, which exposes more of gtsam's functionality to python.
+2.  Gtsam's dependency is not really needed, I just used to experiment adding IMU and/or stereo cameras, and have an easier interface to build factor-graphs. This didn't quite work though, because the network seemed to have a concept of scale, and it didn't quite work when updating poses/landmarks and then optical flow.
+3.  Somehow the parser converts [this](https://github.com/borglab/gtsam/compare/develop...ToniRV:gtsam-1:feature/nerf_slam#diff-add3627555fb7411e36ea4d863c15f4187e018b6e00b608ab260e3221aef057aR345) to
+  `const std::vector<const gtsam::Matrix&>&`, and I need to remove manually in
+  `gtsam/build/python/linear.cpp`
+  the inner `const X& ...`, and also add `<pybind11/stl.h>` because:
+  ```
+    Did you forget to `#include <pybind11/stl.h>`?
+  ```
+
 ## Citation
 
 ```bibtex
@@ -162,4 +174,6 @@ This work has been possible thanks to the open-source code from [Droid-SLAM](htt
 
 ## Contact
 
-Feel free to reach out :) [arosinol@mit.edu](arosinol@mit.edu)
+I have many ideas on how to improve this approach, but I just graduated so I won't have much time to do another PhD...
+If you are interested in building on top of this,
+feel free to reach out :) [arosinol@mit.edu](arosinol@mit.edu)
