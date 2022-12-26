@@ -32,6 +32,9 @@ class FusionModule(MIMOPipelineModule):
         return input if input is not None else False # so that we keep running, and do not just stop in spin()
 
     def set_cuda_device(self):
+        if self.device == "cpu":
+            return
+
         import os
         if self.device == "cuda:0":
             os.environ['CUDA_VISIBLE_DEVICES'] = "0"

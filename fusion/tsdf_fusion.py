@@ -27,7 +27,7 @@ class TsdfFusion:
 
         self.debug = False
 
-        self.dsf = 8.0
+        self.dsf = 8.0 # down-scaling factor, hardcoded in frontend
 
         self.depth_scale = 1.0
         self.min_depth = 0.01
