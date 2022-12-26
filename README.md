@@ -1,11 +1,11 @@
 <div align="center">
   <a href="http://mit.edu/sparklab/">
     <img align="left" src="./media/sparklab_logo.png" width="80" alt="sparklab">
-  </a> 
+  </a>
   <a href="https://marinerobotics.mit.edu/">
     <img align="center" src="./media/mrg_logo.png" width="150" alt="kimera">
-  </a> 
-  <a href="https://www.mit.edu/~arosinol/"> 
+  </a>
+  <a href="https://www.mit.edu/~arosinol/">
     <img align="right" src="./media/mit.png" width="100" alt="mit">
   </a>
 </div>
@@ -26,7 +26,7 @@
   <!-- <h2 align="center">In Review</h2> -->
   <h3 align="center">
     <a href="https://arxiv.org/abs/2210.13641">Paper</a> |
-    <a href="https://www.youtube.com/watch?v=-6ufRJugcEU">Video</a> | 
+    <a href="https://www.youtube.com/watch?v=-6ufRJugcEU">Video</a> |
     <!-- <a href="">Project Page</a>-->
   </h3>
   <div align="center"></div>
@@ -72,6 +72,7 @@ git clone https://github.com/ToniRV/NeRF-SLAM.git --recurse-submodules
 git submodule update --init --recursive
 ```
 
+From this point on, use a virtual environment...
 Install torch (see [here](https://pytorch.org/get-started/previous-versions) for other versions):
 ```
 # CUDA 11.3
@@ -81,12 +82,21 @@ pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 --extra-index-url http
 Pip install requirements:
 ```
 pip install -r requirements.txt
+pip install -r ./thirdparty/gtsam/python/requirements.txt
 ```
 
 Compile ngp (you need cmake>3.22):
 ```
-cmake ./thirdparty/instant-ngp -B build
-cmake --build build --config RelWithDebInfo -j
+cmake ./thirdparty/instant-ngp -B build_ngp
+cmake --build build_ngp --config RelWithDebInfo -j
+```
+
+Compile gtsam and enable the python wrapper:
+```
+cmake ./thirdparty/gtsam -DGTSAM_BUILD_PYTHON=1 -B build_gtsam 
+cmake --build build_gtsam --config RelWithDebInfo -j
+cd build_gtsam
+make python-install
 ```
 
 Install:
@@ -142,12 +152,12 @@ The memory consuming parts of this pipeline are:
 
 This repo is BSD Licensed.
 It reimplements parts of Droid-SLAM (BSD Licensed).
-Our changes to instant-NGP (Nvidia License) are released in our [fork of instant-ngp](https://github.com/ToniRV/instant-ngp) (branch `feature/nerf_slam`) and 
+Our changes to instant-NGP (Nvidia License) are released in our [fork of instant-ngp](https://github.com/ToniRV/instant-ngp) (branch `feature/nerf_slam`) and
 added here as a thirdparty dependency using git submodules.
 
 ## Acknowledgments
 
-This work has been possible thanks to the open-source code from [Droid-SLAM](https://github.com/princeton-vl/DROID-SLAM) and 
+This work has been possible thanks to the open-source code from [Droid-SLAM](https://github.com/princeton-vl/DROID-SLAM) and
 [Instant-NGP](https://github.com/NVlabs/instant-ngp), as well as the open-source datasets [Replica](https://github.com/facebookresearch/Replica-Dataset) and [Cube-Diorama](https://github.com/jc211/nerf-cube-diorama-dataset).
 
 ## Contact
