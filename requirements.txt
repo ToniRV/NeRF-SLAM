@@ -8,8 +8,6 @@ opencv-python
 
 torch-scatter
 
-gtsam==4.2a5
-
 jupyter
 imageio
 
