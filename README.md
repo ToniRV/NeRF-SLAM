@@ -70,6 +70,7 @@ Clone repo with submodules:
 ```
 git clone https://github.com/ToniRV/NeRF-SLAM.git --recurse-submodules
 git submodule update --init --recursive
+cd thirdparty/instant-ngp/ && git checkout feature/nerf_slam
 ```
 
 From this point on, use a virtual environment...
