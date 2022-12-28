@@ -90,19 +90,19 @@ pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 --extra-index-url http
 ```
 
 
-Pip install requirements:
+### Pip install requirements:
 ```
 pip install -r requirements.txt
 pip install -r ./thirdparty/gtsam/python/requirements.txt
 ```
 
-Compile ngp (you need cmake>3.22):
+### Compile ngp (you need cmake>3.22):
 ```
 cmake ./thirdparty/instant-ngp -B build_ngp
 cmake --build build_ngp --config RelWithDebInfo -j
 ```
 
-Compile gtsam and enable the python wrapper:
+### Compile gtsam and enable the python wrapper:
 ```
 cmake ./thirdparty/gtsam -DGTSAM_BUILD_PYTHON=1 -B build_gtsam 
 cmake --build build_gtsam --config RelWithDebInfo -j
@@ -110,7 +110,7 @@ cd build_gtsam
 make python-install
 ```
 
-Install:
+### Install:
 ```
 python setup.py install
 ```
