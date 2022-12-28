@@ -19,3 +19,5 @@ pyrealsense2
 
 pybind11
 gdown
+
+colored_glog
