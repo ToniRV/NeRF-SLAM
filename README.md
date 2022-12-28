@@ -75,10 +75,20 @@ cd thirdparty/instant-ngp/ && git checkout feature/nerf_slam
 
 From this point on, use a virtual environment...
 Install torch (see [here](https://pytorch.org/get-started/previous-versions) for other versions):
+
+### Install CUDA 11.7 and PyTorch
+
+Manually install [CUDA 11.7 here](https://developer.nvidia.com/cuda-11-7-1-download-archive).
+
+Or, if using conda:
 ```
-# CUDA 11.3
-pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 --extra-index-url https://download.pytorch.org/whl/cu113
+conda install -c "nvidia/label/cuda-11.7.0" cuda-toolkit
 ```
+Then install pytorch:
+```
+pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 --extra-index-url https://download.pytorch.org/whl/cu117
+```
+
 
 Pip install requirements:
 ```
