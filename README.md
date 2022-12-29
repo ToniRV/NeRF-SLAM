@@ -130,6 +130,14 @@ python ./examples/slam_demo.py --dataset_dir=./datasets/Replica/office0 --datase
 
 This repo also implements [Sigma-Fusion](https://arxiv.org/abs/2210.01276): just change `--fusion='sigma'` to run that.
 
+### Other Run modes
+
+Skip SLAM, use GT poses and depth with the cube diorama scene:
+```
+./scripts/download_cube.bash 
+python ./examples/slam_demo.py --dataset_dir=./datasets/nerf-cube-diorama-dataset/room --dataset_name=nerf --buffer=100 --img_stride=1 --fusion='nerf' --gui
+```
+
 ## FAQ
 
 ### GPU Memory
