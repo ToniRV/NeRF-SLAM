@@ -1,10 +1,10 @@
 #!/usr/bin/env sh
 
-mkdir -p Datasets
-cd Datasets
+mkdir -p datasets
+cd datasets
 
 gdown 1f4RJ4W9uxlhCvihG12X9Wa4yZrlBD4TE
 
 mkdir -p Replica/
-unzip ReplicaSample.zip -d Replica
+unzip replica_sample.zip -d Replica
 
