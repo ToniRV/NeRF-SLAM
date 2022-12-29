@@ -5,7 +5,7 @@ import json
 import numpy as np
 
 import cv2
-import tqdm
+from tqdm import tqdm
 
 from icecream import ic
 from datasets.dataset import * 
@@ -66,18 +66,52 @@ class ReplicaDataset(Dataset):
         N = self.args.buffer
         H, W = self.calib.resolution.height, self.calib.resolution.width
 
+        self.resize_images = False
+        if self.calib.resolution.total() > 640*640:
+            self.resize_images = True
+            # TODO(Toni): keep aspect ratio, and resize max res to 640
+            self.output_image_size = [341, 640] # h, w 
+
+        if self.resize_images:
+            h0, w0  = self.calib.resolution.height, self.calib.resolution.width
+            total_output_pixels = (self.output_image_size[0] * self.output_image_size[1])
+            self.h1 = int(h0 * np.sqrt(total_output_pixels / (h0 * w0)))
+            self.w1 = int(w0 * np.sqrt(total_output_pixels / (h0 * w0)))
+            self.h1 = self.h1 - self.h1 % 8
+            self.w1 = self.w1 - self.w1 % 8
+            self.calib.camera_model.scale_intrinsics(self.w1 / w0, self.h1 / h0)
+            self.calib.resolution = Resolution(self.w1, self.h1)
+
+        subset_poses = []        
+
+        if self.final_k == -1:
+            self.final_k = len(self.poses) - 1
+
         # Parse images and tfs
         for i, (image_path, depth_path) in enumerate(tqdm(zip(self.image_paths, self.depth_paths))):
-            if i >= N:
-                break
+                
+            if ((i-self.initial_k) % self.img_stride) != 0 or i < self.initial_k or i > self.final_k:
+                continue
 
             # Parse rgb/depth images
             image = cv2.imread(image_path)
             depth = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
 
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # this is for NERF
-            depth = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)[..., None] # H, W, C=1
+            #depth = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)[..., None] # H, W, C=1            
 
+            if self.resize_images:
+                w1, h1 = self.w1, self.h1
+                image = cv2.resize(image, (w1, h1))
+                image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA) # Required for Nerf Fusion, perhaps we can put it in there
+
+                depth = cv2.resize(depth, (w1, h1))
+                depth = depth[:, :, np.newaxis]
+
+                if self.viz:
+                    cv2.imshow(f"Img Resized", image)
+                    cv2.imshow(f"Depth Resized", depth)
+                    cv2.waitKey(1)
+            
             H, W, _  = depth.shape
             assert(H == image.shape[0])
             assert(W == image.shape[1])
@@ -94,8 +128,13 @@ class ReplicaDataset(Dataset):
             self.images     += [image]
             self.depths     += [depth]
             self.calibs     += [self.calib]
+            subset_poses    += [self.poses[i]]
 
-        self.poses = self.poses[:N]
+            # Early break if we've exceeded the buffer max
+            if len(self.images) == self.args.buffer:
+                break
+
+        self.poses = subset_poses
 
         self.timestamps = np.array(self.timestamps)
         self.poses      = np.array(self.poses)
