@@ -456,7 +456,7 @@ class TsdfFusion:
             # Calc metrics
             if evaluate:
                 # Calculate PSNR 
-                rendered_c = rendered_c.as_tensor() / 255.0
+                rendered_c = rendered_c.as_tensor()
                 color = color / 255.0
                 mse = float(compute_error(rendered_c.cpu().numpy(), color.cpu().numpy()))
                 psnr = mse2psnr(mse)
