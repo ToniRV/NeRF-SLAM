@@ -214,7 +214,7 @@ class NerfFusion:
         else:
             images = srgb_to_linear(images, self.device)
 
-        data_packets = {"k":                viz_idx,
+        data_packets = {"k":            viz_idx.cpu().numpy(),
                     "poses":            world_T_cam0,  # needs to be c2w
                     "images":           images.contiguous().cpu().numpy(),
                     "depths":           depths.contiguous().cpu().numpy(),
@@ -282,11 +282,16 @@ class NerfFusion:
         principal_point = intrinsics[2:]
 
         # TODO: we need to restore the self.ref_frames[frame_id] = [image, gt, etc] for evaluation....
-        self.ngp.nerf.training.update_training_images(frame_ids.cpu().numpy().tolist(), 
+        self.ngp.nerf.training.update_training_images(list(frame_ids),
                                                       list(poses[:, :3, :4]), 
                                                       list(images), 
                                                       list(depths), 
                                                       list(depths_cov), resolution, principal_point, focal_length, depth_scale, depth_cov_scale)
+
+        # On the first frame, set the viewpoint
+        if self.ngp.nerf.training.n_images_for_training == 1:
+            self.ngp.set_camera_to_training_view(0) 
+
 
     def fit_volume(self):
         #print(f"Fitting volume for {self.iters} iters")

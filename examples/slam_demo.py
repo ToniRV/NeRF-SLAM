@@ -110,12 +110,14 @@ def run(args):
             data_provider_module.register_output_queue(data_for_fusion_output_queue)
             fusion_module.register_input_queue("data", data_for_fusion_output_queue)
 
+
     # Create interactive Gui
     gui = args.gui and args.fusion != 'nerf' # nerf has its own gui
     if gui:
         gui_module = GuiModule("Open3DGui", args, device=cuda_slam) # don't use cuda:1, o3d doesn't work...
         data_provider_module.register_output_queue(data_for_viz_output_queue)
-        slam_module.register_output_queue(slam_output_queue_for_o3d)
+        if slam:
+            slam_module.register_output_queue(slam_output_queue_for_o3d)
         gui_module.register_input_queue("data", data_for_viz_output_queue)
         gui_module.register_input_queue("slam", slam_output_queue_for_o3d)
         if fusion and (fusion_module.name == "tsdf" or fusion_module.name == "sigma"):

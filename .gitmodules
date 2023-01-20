@@ -10,5 +10,5 @@
 	branch = feature/nerf_slam
 [submodule "thirdparty/gtsam"]
 	path = thirdparty/gtsam
-	url = https://github.com/ToniRV/gtsam-1.git
-	branch = feature/nerf_slam
+	url = https://github.com/borglab/gtsam.git
+	branch = develop
