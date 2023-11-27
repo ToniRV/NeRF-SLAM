@@ -13,8 +13,10 @@ from lietorch import SE3
 
 import torch
 
-import gtsam
-from gtsam import Values
+# import gtsam
+# TODO: check if gtsam Values obj matches symforce Values obj
+# from gtsam import Values
+from symforce.values import Values
 
 def to_o3d_device(device):
     if device == "cpu":
@@ -405,8 +407,13 @@ class Open3dGui:
 
         if type(packet) is Values:
             values = packet
-            cam0_poses = gtsam.utilities.allPose3s(values)
-            keys = gtsam.KeyVector(cam0_poses.keys())
+            # cam0_poses = gtsam.utilities.allPose3s(values)
+            # keys = gtsam.KeyVector(cam0_poses.keys())
+            #   cam0_poses in only accessed in this function for its keys,
+            #   so here just grabbing the keys from 'values'
+
+            keys = values.keys()
+
             if len(keys) > 0:
                 for key in keys:
                     if values.exists(key):
@@ -414,7 +421,8 @@ class Open3dGui:
                             self.viz.remove_geometry(self.gtsam_camera_actors[key])
                             del self.gtsam_camera_actors[key]
 
-                        gtsam_world_T_body = values.atPose3(key)
+                        # gtsam_world_T_body = values.atPose3(key)
+                        gtsam_world_T_body = values.get(key)
                         gtsam_world_T_cam0 = gtsam_world_T_body * self.body_T_cam0
                         color = (0.5, 0.25, 0.45)
                         camera_actor = self.create_camera_actor(
