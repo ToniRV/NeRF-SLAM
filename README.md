@@ -85,6 +85,13 @@ pip install -r requirements.txt
 pip install -r ./thirdparty/gtsam/python/requirements.txt
 ```
 
+Ensure you have additional dependencies installed (Boost, X11):
+```
+sudo apt-get update
+sudo apt-get install libboost-all-dev
+sudo apt install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+```
+
 Compile ngp (you need cmake>3.22):
 ```
 cmake ./thirdparty/instant-ngp -B build_ngp
