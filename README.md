@@ -85,6 +85,19 @@ pip install -r requirements.txt
 pip install -r ./thirdparty/gtsam/python/requirements.txt
 ```
 
+Ensure you have additional dependencies installed (Boost, X11):
+```
+sudo apt-get update
+sudo apt-get install libboost-all-dev
+sudo apt install libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+```
+
+(Optional) Download and install OptiX for SDF training in raystab and pathescape modes.
+```
+wget https://developer.nvidia.com/downloads/designworks/optix/secure/8.0.0/nvidia-optix-sdk-8.0.0-linux64-x86_64.sh
+~/Downloads/NVIDIA-OptiX-SDK-8.0.0-linux64-x86_64.sh
+```
+
 Compile ngp (you need cmake>3.22):
 ```
 cmake ./thirdparty/instant-ngp -B build_ngp
