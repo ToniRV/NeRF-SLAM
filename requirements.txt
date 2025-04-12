@@ -19,3 +19,6 @@ pyrealsense2
 
 pybind11
 gdown
+
+colored_glog
+git+https://github.com/princeton-vl/lietorch.git
