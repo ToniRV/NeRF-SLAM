@@ -67,6 +67,7 @@
 ## Install
 
 Clone repo with submodules:
+
 ```
 git clone https://github.com/ToniRV/NeRF-SLAM.git --recurse-submodules
 git submodule update --init --recursive
@@ -74,39 +75,80 @@ git submodule update --init --recursive
 
 From this point on, use a virtual environment...
 Install torch (see [here](https://pytorch.org/get-started/previous-versions) for other versions):
+
 ```
 # CUDA 11.3
 pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 --extra-index-url https://download.pytorch.org/whl/cu113
 ```
 
 Pip install requirements:
+
 ```
 pip install -r requirements.txt
 pip install -r ./thirdparty/gtsam/python/requirements.txt
 ```
 
+### Installing `instant-ngp`
+
+Re-clone `instant-ngp` repo from the correct source
+
+```
+cd thirdparty
+rm -rf instant-ngp
+git clone --recursive https://github.com/ToniRV/instant-ngp
+cd instant-ngp
+git checkout feature/nerf_slam
+```
+
 Compile ngp (you need cmake>3.22):
+
 ```
 cmake ./thirdparty/instant-ngp -B build_ngp
 cmake --build build_ngp --config RelWithDebInfo -j
 ```
 
-Compile gtsam and enable the python wrapper:
+## Installing `gtsam`
+
+Re-clone `gtsam` repo from the correct source
+
 ```
-cmake ./thirdparty/gtsam -DGTSAM_BUILD_PYTHON=1 -B build_gtsam 
+cd thirdparty
+rm -rf gtsam
+git clone --recursive https://github.com/ToniRV/gtsam-1
+mv gtsam-1 gtsam
+cd gtsam
+git checkout feature/nerf_slam
+```
+
+Compile gtsam and enable the python wrapper:
+
+```
+cmake ./thirdparty/gtsam -DGTSAM_BUILD_PYTHON=1 -B build_gtsam
 cmake --build build_gtsam --config RelWithDebInfo -j
 cd build_gtsam
 make python-install
 ```
 
-Install:
+**Note**: If you encounter an error after running `cmake --build build_gtsam --config RelWithDebInfo -j
+`, try the following fix:
+
+1.  Edit `<NeRF-SLAM-root-dir>/build_gtsam/python/linear.cpp`
+2.  Change `const std::vector<const gtsam::Matrix&>&` to `const std::vector<gtsam::Matrix>&`
+3.  Change `const std::vector<const gtsam::Vector&>&` to `const std::vector<gtsam::Vector>&`
+4.  Save `<NeRF-SLAM-root-dir>/build_gtsam/python/linear.cpp`
+5.  Rerun `cmake --build build_gtsam --config RelWithDebInfo -j` again.
+
+## Install `droid-backends`
+
 ```
-python setup.py install
+python setup.py bdist_wheel
+pip install dist/<droid-backends-whl>
 ```
 
 ## Download Sample Data
 
 This will just download one of the replica scenes:
+
 ```
 ./scripts/download_replica_sample.bash
 ```
@@ -125,31 +167,35 @@ This repo also implements [Sigma-Fusion](https://arxiv.org/abs/2210.01276): just
 
 This is a GPU memory intensive pipeline, to monitor your GPU usage, I'd recommend to use `nvitop`.
 Install nvitop in a local env:
+
 ```
 pip3 install --upgrade nvitop
 ```
 
 Keep it running on a terminal, and monitor GPU memory usage:
+
 ```
 nvitop --monitor
 ```
 
 If you consistently see "out-of-memory" errors, you may either need to change parameters or buy better GPUs :).
 The memory consuming parts of this pipeline are:
+
 - Frame to frame correlation volumes (but can be avoided using on-the-fly correlation computation).
 - Volumetric rendering (intrinsically memory intensive, tricks exist, but ultimately we need to move to light fields or some better representation (OpenVDB?)).
 
 ### Installation issues
 
 1. Gtsam not working: check that the python wrapper is installed, check instructions here: [gtsam_python](https://github.com/ToniRV/gtsam-1/blob/develop/python/README.md). Make sure you use our gtsam fork, which exposes more of gtsam's functionality to python.
-2.  Gtsam's dependency is not really needed, I just used to experiment adding IMU and/or stereo cameras, and have an easier interface to build factor-graphs. This didn't quite work though, because the network seemed to have a concept of scale, and it didn't quite work when updating poses/landmarks and then optical flow.
-3.  Somehow the parser converts [this](https://github.com/borglab/gtsam/compare/develop...ToniRV:gtsam-1:feature/nerf_slam#diff-add3627555fb7411e36ea4d863c15f4187e018b6e00b608ab260e3221aef057aR345) to
-  `const std::vector<const gtsam::Matrix&>&`, and I need to remove manually in
-  `gtsam/build/python/linear.cpp`
-  the inner `const X& ...`, and also add `<pybind11/stl.h>` because:
-  ```
-    Did you forget to `#include <pybind11/stl.h>`?
-  ```
+2. Gtsam's dependency is not really needed, I just used to experiment adding IMU and/or stereo cameras, and have an easier interface to build factor-graphs. This didn't quite work though, because the network seemed to have a concept of scale, and it didn't quite work when updating poses/landmarks and then optical flow.
+3. Somehow the parser converts [this](https://github.com/borglab/gtsam/compare/develop...ToniRV:gtsam-1:feature/nerf_slam#diff-add3627555fb7411e36ea4d863c15f4187e018b6e00b608ab260e3221aef057aR345) to
+   `const std::vector<const gtsam::Matrix&>&`, and I need to remove manually in
+   `gtsam/build/python/linear.cpp`
+   the inner `const X& ...`, and also add `<pybind11/stl.h>` because:
+
+```
+  Did you forget to `#include <pybind11/stl.h>`?
+```
 
 ## Citation
 

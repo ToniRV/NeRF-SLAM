@@ -62,7 +62,7 @@ def initial_state():
                                       gtsam.Point3(0.878612, 2.142470, 0.947262))
     true_vel = np.array([0.009474,-0.014009,-0.002145])
     true_bias = gtsam.imuBias.ConstantBias(np.array([-0.012492,0.547666,0.069073]), np.array([-0.002229,0.020700,0.076350]))
-    naive_pose = gtsam.Pose3.identity()
+    naive_pose = gtsam.Pose3.Identity()
     naive_vel = np.zeros(3)
     naive_bias = gtsam.imuBias.ConstantBias()
     initial_pose = true_world_T_imu_t0
