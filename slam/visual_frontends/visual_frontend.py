@@ -45,8 +45,8 @@ def lietorch_pose_to_gtsam(pose : lietorch.SE3):
 
 def gtsam_pose_to_torch(pose: gtsam.Pose3, device, dtype):
     t = pose.translation()
-    q = pose.rotation().quaternion()
-    return torch.tensor([t[0], t[1], t[2], q[1], q[2], q[3], q[0]], device=device, dtype=dtype)
+    q = pose.rotation().toQuaternion()
+    return torch.tensor([t[0], t[1], t[2], q.x(), q.y(), q.z(), q.w()], device=device, dtype=dtype)
 
 class VisualFrontend(nn.Module):
     def __init__(self):
